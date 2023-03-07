@@ -38,6 +38,7 @@ dependencies:
   video_player:
   flutter_cache_manager:
   eva_icons_flutter:
+  rxdart:
 
 dev_dependencies:
   flutter_test:

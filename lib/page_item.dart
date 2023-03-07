@@ -2,6 +2,7 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_reels_app/model_class.dart';
 
@@ -16,6 +17,8 @@ class PageItem extends StatefulWidget {
 class _PageItemState extends State<PageItem> {
 
   VideoPlayerController? _controller;
+  BehaviorSubject<bool> s = BehaviorSubject<bool>.seeded(false);
+  Stream<bool> get controllerStream => s.stream;
 
   @override
   void initState() {
@@ -29,18 +32,16 @@ class _PageItemState extends State<PageItem> {
       _controller = VideoPlayerController.network(url ?? '');
       _controller!.initialize().then((value) {
         cachedForUrl(url ?? '');
-        setState(() {
           _controller!.play();
-        });
+          s.sink.add(true);
+
       });
     } else {
       final file = fileInfo.file;
-      _controller = VideoPlayerController.file(file);
+      _controller = VideoPlayerController.network(url ?? '');
       _controller!.initialize().then((value) {
-        print("hiii");
-        // setState(() {
-        //   _controller!.play();
-        // });
+          _controller!.play();
+          s.sink.add(true);
       });
     }
   }
@@ -76,23 +77,31 @@ class _PageItemState extends State<PageItem> {
       children: [
         Container(
             color: Colors.black,
-            child: (_controller == null || (!_controller!.value.isInitialized)) ? Container(color: Colors.black) :
-            VideoPlayer(_controller!)
+            child:  StreamBuilder<bool>(
+              stream: controllerStream,
+              builder: (context, snapshot) {
+                if(snapshot.data == true) {
+                  return VideoPlayer(_controller!);
+                } else {
+                  return  Container(color: Colors.black);
+                }
+              }
+            )
         ),
         Align(
           alignment: Alignment.topLeft,
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(top: 50.0),
             child: IconButton(onPressed: (){
               Navigator.pop(context);
-            }, icon: Icon(Icons.arrow_back,color: Colors.white,)),
+            }, icon: const Icon(Icons.arrow_back,color: Colors.white,)),
           ),
         ),
         Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
               padding: const EdgeInsets.only(left: 20.0, bottom: 40,right: 20),
-              child: Text(widget.data.caption ?? '', style: TextStyle(color: Colors.white)),
+              child: Text(widget.data.caption ?? '', style: const TextStyle(color: Colors.white)),
             )),
         Align(
             alignment: Alignment.bottomRight,
@@ -108,13 +117,13 @@ class _PageItemState extends State<PageItem> {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(EvaIcons.heartOutline, color: Colors.white),
-          Text(widget.data.likes.toString(), style: TextStyle(color: Colors.white)),
-          SizedBox(
+          const Icon(EvaIcons.heartOutline, color: Colors.white),
+          Text(widget.data.likes.toString(), style: const TextStyle(color: Colors.white)),
+          const SizedBox(
               height: 10
           ),
-          Icon(EvaIcons.eyeOutline, color: Colors.white),
-          Text(widget.data.views.toString(), style: TextStyle(color: Colors.white),)
+          const Icon(EvaIcons.eyeOutline, color: Colors.white),
+          Text(widget.data.views.toString(), style: const TextStyle(color: Colors.white),)
         ],
       ),
     );
